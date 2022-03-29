@@ -10,14 +10,20 @@ using System.Windows.Forms;
 
 namespace _254008_L02
 {
+
     public partial class Form1 : Form
     {
+        public DB context;
+        public int ID = 0;
+
         private string currency;
         private string date;
 
         public Form1()
         {
             InitializeComponent();
+
+            context = new DB();
 
             update();
         }
@@ -40,6 +46,11 @@ namespace _254008_L02
             if( table != null)
             {
                 richTextBox1.Text = $"Kurs { table.code } ({ table.currency }) na dzień { table.rates[0].effectiveDate } wynosił { table.rates[0].mid }.\n" + richTextBox1.Text;
+
+                table.ID = ID++;
+
+                context.Serialized.Add( NBP.serialize( table ));
+                context.SaveChanges();
             }
             else
             {
@@ -51,7 +62,7 @@ namespace _254008_L02
 
         private void button2_Click(object sender, EventArgs e)
         {
-            richTextBox1.Text = null;
+            richTextBox1.Clear();
 
             update();
         }
@@ -70,5 +81,23 @@ namespace _254008_L02
             update();
         }
 
+        private void button3_Click(object sender, EventArgs e)
+        {
+            richTextBox1.Clear();
+
+            string history = "Recent history: ---+---+---+---+---+---+---\n";
+
+            var serialized = (from s in context.Serialized select s).ToList<Serial>();
+            foreach (var serial in serialized)
+            {
+                ModelTable table = NBP.deserialize( serial.data );
+
+                history += $"Kurs { table.code } ({ table.currency }) na dzień { table.rates[0].effectiveDate } wynosił { table.rates[0].mid }.\n";
+            }
+
+            richTextBox1.Text = history;
+
+            update();
+        }
     }
 }
